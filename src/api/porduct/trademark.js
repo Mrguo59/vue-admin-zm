@@ -12,24 +12,20 @@ export default {
 	},
 
 	//添加
-	addPagesList(banner) {
+	addPagesList(data) {
 		return request({
 			method: 'POST',
 			url: `${api_name}/save`,
-			data: {
-				banner
-			}
+			data
 		});
 	},
 
 	//修改
-	updataPagesList(banner) {
+	updataPagesList(data) {
 		return request({
 			method: 'PUT',
 			url: `${api_name}/update`,
-			data: {
-				banner
-			}
+			data
 		});
 	},
 

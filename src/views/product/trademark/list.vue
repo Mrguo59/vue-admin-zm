@@ -1,6 +1,23 @@
 <template>
   <div>
-    <el-button type="primary" icon="el-icon-plus">添加</el-button>
+    <el-button type="primary" icon="el-icon-plus" @click="visible = true"
+      >添加</el-button
+    >
+    <!--
+      :count="count"
+      v-bind:count="count" 单向数据流 / 强制绑定数据
+        子组件只能读取不能修改
+        问题：子组件需要修改数据
+        解决：数据源在哪，更新数据的方法就定义在哪
+
+      :count.sync="count" 给子组件传递xxx数据以及更新数据的方法update:xxx
+        相当于：
+          :count="count" @update:count="xxx"
+
+        .sync用于父子通信（子向父）
+     -->
+    <!-- <Test :count="count" :updateCount="updateCount" /> -->
+    <!-- <Test :count.sync="count" /> -->
     <el-table
       :data="tradeMarkList"
       border
@@ -53,6 +70,53 @@
       @size-change="repeatPagesList(page, $event)"
     >
     </el-pagination>
+
+    <el-dialog title="添加品牌" :visible.sync="visible" width="50%">
+      <el-form
+        :model="trademarkForm"
+        :rules="rules"
+        ref="trademarkForm"
+        label-width="100px"
+        class="demo-ruleForm"
+      >
+        <el-form-item label="品牌名称" prop="tmName">
+          <el-input v-model="trademarkForm.tmName"></el-input>
+        </el-form-item>
+        <el-form-item label="品牌LOGO" prop="logoUrl">
+          <!--
+            前提允许跨域
+              action="http://182.92.128.115/admin/product/fileUpload"
+              目标服务器地址: 代理配置中 (vue.config.js)
+
+            不允许跨域，就使用proxy
+              action="/dev-api/admin/product/fileUpload"
+              /dev-api -> request.js 代理
+             在main.js中定义 Vue.prototype.$BASE_API = process.env.VUE_APP_BASE_API
+           -->
+          <el-upload
+            class="avatar-uploader"
+            :action="`${$BASE_API}/admin/product/fileUpload`"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
+          >
+            <img
+              v-if="trademarkForm.logoUrl"
+              :src="trademarkForm.logoUrl"
+              class="avatar"
+            />
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
+          <span>只能上传jpg/png文件，且不超过50kb</span>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="visible = false">取 消</el-button>
+        <el-button type="primary" @click="submitForm('trademarkForm')"
+          >确 定</el-button
+        >
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -65,14 +129,36 @@ export default {
       page: 1, // 页码
       limit: 3, // 每页条数
       total: 0, // 总数
+      visible: false, // 对话框显示&隐藏
+      trademarkForm: {
+        // 表单数据
+        tmName: "",
+        logoUrl: "",
+      },
+      rules: {
+        // 表单校验规则
+        tmName: [
+          {
+            // 必填项
+            required: true,
+            // 错误信息
+            message: "请输入活动名称",
+            // 触发表单校验时机
+            trigger: "blur",
+          },
+        ],
+        logoUrl: [{ required: true, message: "请上传品牌LOGO" }],
+      },
     };
   },
   methods: {
+    //当点击页码的时候传入最新的参数，请求数据
     // handleCurrentChange(page) {
     //   // console.log(page);
     //   // console.log(this.limit);
     //   this.repeatPagesList(page, this.limit);
     // },
+    //当点击每页多少条的时候传入最新的参数，请求数据
     // handleSizeChange(limit) {
     //   // console.log(limit);
     //   this.repeatPagesList(this.page, limit);
@@ -83,18 +169,66 @@ export default {
 
       // console.log(result);
       // console.log(this.page, this.limit);
+      //如果code为200，代表请求成功
       if (result.code === 200) {
         this.$message.success("获取品牌分页列表成功");
+        //更新data里的数据
         this.tradeMarkList = result.data.records;
-        this.page = result.data.current;
-        this.limit = result.data.size;
-        this.total = result.data.total;
+        this.page = result.data.current; // 代表当前页码
+        this.limit = result.data.size; // 代表每页显示的条数
+        this.total = result.data.total; // 总数
       } else {
         this.$message.error("获取品牌分页列表失败");
       }
     },
+    // 当点击确认的时候，会触发，提交表单
+    submitForm(formName) {
+      // 校验表单
+      this.$refs[formName].validate(async (valid) => {
+        // console.log(valid);
+        //当校验通过的时候，valid才为ture
+        if (valid) {
+          // 表单校验通过,发送请求
+          const result = await this.$API.trademark.addPagesList(
+            this.trademarkForm
+          );
+          if (result.code === 200) {
+            this.$message.success("添加品牌数据成功");
+            this.visible = false; // 隐藏对话框
+            this.repeatPagesList(this.page, this.limit); // 请求加载新数据
+          } else {
+            this.$message.error(result.message);
+          }
+        }
+      });
+    },
+    // 上传图片成功的回调
+    handleAvatarSuccess(res) {
+      console.log(res);
+      this.trademarkForm.logoUrl = res.data; // 图片地址
+    },
+    //上次图片之前触发的回调
+    beforeAvatarUpload(file) {
+      // console.log(file);
+      const ImgType = ["image/jpeg", "image/jpg", "image/png"];
+      // 检测文件类型
+      const fitImgType = ImgType.indexOf(file.type) > -1;
+      // 检测文件大小
+      const fitSize = file.size / 1024 < 50;
+
+      if (!fitImgType) {
+        this.$message.error("上传头像图片只能是jpeg/png/jpg格式!");
+      }
+      if (!fitSize) {
+        this.$message.error("上传头像图片大小不能超过50kb!");
+      }
+      // 返回值为true，代表可以上传
+      // 返回值为false，代表不可以上传
+      return fitImgType && fitSize;
+    },
   },
   mounted() {
+    //一上来就发请求，渲染页面
     const { page, limit } = this;
     this.repeatPagesList(page, limit);
   },
@@ -122,12 +256,34 @@ export default {
 */
 };
 </script>
-<style lang="sass">
+<style lang="sass" scoped>
 .trademart-img
   width: 100px
   height: 60px
 .el-pagination
   text-align: right
-.el-pagination__jump
+>>>.el-pagination__jump
   margin-right: 320px
+>>>.avatar-uploader .el-upload
+  border: 1px dashed #d9d9d9
+  border-radius: 6px
+  cursor: pointer
+  position: relative
+  overflow: hidden
+
+  &:hover
+    border-color: #409EFF
+
+>>>.avatar-uploader-icon
+  font-size: 28px
+  color: #8c939d
+  width: 178px
+  height: 178px
+  line-height: 178px
+  text-align: center
+
+>>>.avatar
+  width: 178px
+  height: 178px
+  display: block
 </style>
