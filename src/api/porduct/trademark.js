@@ -32,7 +32,7 @@ export default {
 	//删除
 	delPagesList(id) {
 		return request({
-			method: 'GET',
+			method: 'DELETE',
 			url: `${api_name}/remove/${id}`
 		});
 	}

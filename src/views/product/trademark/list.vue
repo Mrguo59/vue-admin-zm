@@ -26,7 +26,7 @@
       <el-table-column type="index" label="序号" width="80" align="center">
       </el-table-column>
       <el-table-column prop="tmName" label="品牌名称"> </el-table-column>
-      <el-table-column prop="logoUrl" label="品牌LOGO">
+      <el-table-column label="品牌LOGO">
         <template slot-scope="scope">
           <!--
             scope代表所有数据
@@ -35,12 +35,16 @@
           <img :src="scope.row.logoUrl" alt="" class="trademart-img" />
         </template>
       </el-table-column>
-      <el-table-column prop="operaTion" label="操作">
-        <template>
+      <el-table-column label="操作">
+        <template slot-scope="scope">
           <el-button type="warning" icon="el-icon-edit" size="mini"
             >修改</el-button
           >
-          <el-button type="danger" icon="el-icon-delete" size="mini"
+          <el-button
+            type="danger"
+            icon="el-icon-delete"
+            size="mini"
+            @click="delBrand(scope.row.id, scope.row.tmName)"
             >删除</el-button
           >
         </template>
@@ -60,6 +64,7 @@
           假设这样触发自定义事件： this.$emit('aaa', 123, 456);
           那么$event就为123（第一个参数）
     -->
+    <!-- page-size.sync 如果传数据，只是传输数据，这样传，数据是只读的，不能被修改，加上sync以后，即会传数据，还会传更新数据的方法，这样一旦值发生变化，子组件内部就会调用更新数据的方法，去更新父组件的数据，导致外面的值也发生了变化，这样就可以让limit更新变成同步更新了 -->
     <el-pagination
       layout="prev, pager, next,jumper,sizes,total"
       :page-sizes="[3, 6, 9]"
@@ -70,7 +75,7 @@
       @size-change="repeatPagesList(page, $event)"
     >
     </el-pagination>
-
+    <!-- 加上.sync,就说明dialog这个子组件内部也会修改visible这个数据 -->
     <el-dialog title="添加品牌" :visible.sync="visible" width="50%">
       <el-form
         :model="trademarkForm"
@@ -204,7 +209,7 @@ export default {
     },
     // 上传图片成功的回调
     handleAvatarSuccess(res) {
-      console.log(res);
+      // console.log(res);
       this.trademarkForm.logoUrl = res.data; // 图片地址
     },
     //上次图片之前触发的回调
@@ -225,6 +230,27 @@ export default {
       // 返回值为true，代表可以上传
       // 返回值为false，代表不可以上传
       return fitImgType && fitSize;
+    },
+
+    async delBrand(id, tmName) {
+      // console.log(id);
+      this.$confirm(`您确定要删除${tmName}吗?`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(async () => {
+          const result = await this.$API.trademark.delPagesList(id);
+          if (result.code === 200) {
+            this.$message.success("删除成功");
+            this.repeatPagesList(this.page, this.limit); // 请求加载新数据
+          } else {
+            this.$message.error("删除失败");
+          }
+        })
+        .catch(() => {
+          this.$message.info("已取消删除");
+        });
     },
   },
   mounted() {
