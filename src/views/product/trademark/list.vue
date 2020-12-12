@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-button type="primary" icon="el-icon-plus" @click="visible = true"
+    <el-button type="primary" icon="el-icon-plus" @click="addBrand"
       >添加</el-button
     >
     <!--
@@ -19,6 +19,7 @@
     <!-- <Test :count="count" :updateCount="updateCount" /> -->
     <!-- <Test :count.sync="count" /> -->
     <el-table
+      v-loading="loading"
       :data="tradeMarkList"
       border
       style="width: 100%; margin: 20px 0px"
@@ -37,7 +38,11 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-          <el-button type="warning" icon="el-icon-edit" size="mini"
+          <el-button
+            type="warning"
+            icon="el-icon-edit"
+            size="mini"
+            @click="updataBrand(scope.row, scope)"
             >修改</el-button
           >
           <el-button
@@ -76,7 +81,11 @@
     >
     </el-pagination>
     <!-- 加上.sync,就说明dialog这个子组件内部也会修改visible这个数据 -->
-    <el-dialog title="添加品牌" :visible.sync="visible" width="50%">
+    <el-dialog
+      :title="`${trademarkForm.id ? '修改' : '添加'}品牌`"
+      :visible.sync="visible"
+      width="50%"
+    >
       <el-form
         :model="trademarkForm"
         :rules="rules"
@@ -134,6 +143,7 @@ export default {
       page: 1, // 页码
       limit: 3, // 每页条数
       total: 0, // 总数
+      loading: false,
       visible: false, // 对话框显示&隐藏
       trademarkForm: {
         // 表单数据
@@ -170,6 +180,7 @@ export default {
     // },
     // 请求分页列表数据
     async repeatPagesList(page, limit) {
+      this.loading = true;
       const result = await this.$API.trademark.getPagesList(page, limit);
 
       // console.log(result);
@@ -185,6 +196,7 @@ export default {
       } else {
         this.$message.error("获取品牌分页列表失败");
       }
+      this.loading = false;
     },
     // 当点击确认的时候，会触发，提交表单
     submitForm(formName) {
@@ -193,12 +205,36 @@ export default {
         // console.log(valid);
         //当校验通过的时候，valid才为ture
         if (valid) {
+          const { trademarkForm } = this;
+          // 代表是否是更新，!!代表强制转换为布尔值
+          const isUpdata = !!trademarkForm.id;
+          // console.log(isUpdata);
+          // 如果是修改需要验证
+          if (isUpdata) {
+            const tm = this.tradeMarkList.find(
+              (tm) => tm.id === trademarkForm.id
+            );
+
+            if (
+              tm.tmName === trademarkForm.tmName &&
+              tm.logoUrl === trademarkForm.logoUrl
+            ) {
+              this.$message.warning("不能提交和之前相同的数据");
+              return;
+            }
+          }
+
           // 表单校验通过,发送请求
-          const result = await this.$API.trademark.addPagesList(
-            this.trademarkForm
-          );
+          let result;
+          //如果是修改，就发送修改的请求，否则发送添加的请求
+          if (isUpdata) {
+            result = await this.$API.trademark.updataPagesList(trademarkForm);
+          } else {
+            result = await this.$API.trademark.addPagesList(trademarkForm);
+          }
+
           if (result.code === 200) {
-            this.$message.success("添加品牌数据成功");
+            this.$message.success(`${isUpdata ? "修改" : "添加"}品牌数据成功`);
             this.visible = false; // 隐藏对话框
             this.repeatPagesList(this.page, this.limit); // 请求加载新数据
           } else {
@@ -231,7 +267,30 @@ export default {
       // 返回值为false，代表不可以上传
       return fitImgType && fitSize;
     },
-
+    //添加弹框函数
+    addBrand() {
+      // 显示对话框
+      this.visible = true;
+      // 清空（从修改 - 添加要清空修改的数据）
+      //把trademarkForm重新赋值为一个对象，对象里有tmName和logoUrl属性
+      this.trademarkForm = {
+        tmName: "",
+        logoUrl: "",
+      };
+      // 清空表单的校验,不点击添加按钮的时候，from组件不会渲染，就不能调用clearValidate方法，此时会报错，所以要先判断一下
+      this.$refs.trademarkForm && this.$refs.trademarkForm.clearValidate();
+    },
+    //修改功能函数
+    updataBrand(row) {
+      // row 代表当前行的数据 {}
+      // console.log(row, scope);
+      // 显示对话框
+      this.visible = true;
+      this.trademarkForm = { ...row };
+      // 清空表单的校验,不点击修改按钮的时候，from组件不会渲染，就不能调用clearValidate方法，此时会报错，所以要先判断一下
+      this.$refs.trademarkForm && this.$refs.trademarkForm.clearValidate();
+    },
+    //删除功能函数
     async delBrand(id, tmName) {
       // console.log(id);
       this.$confirm(`您确定要删除${tmName}吗?`, "提示", {
@@ -285,7 +344,7 @@ export default {
 <style lang="sass" scoped>
 .trademart-img
   width: 100px
-  height: 60px
+  height: 80px
 .el-pagination
   text-align: right
 >>>.el-pagination__jump
