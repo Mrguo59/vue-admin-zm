@@ -1,6 +1,7 @@
 <template>
   <div>
-    <Category @attrList="attrList" />
+    <!-- 当isShowAttr为false的时候，就需要禁用三级分类列表，传给Category组件 -->
+    <Category @attrList="attrList" :disabled="!isShowAttr" />
     <el-card style="margin-top: 20px" v-show="isShowAttr">
       <el-button type="primary" icon="el-icon-plus" style="margin-bottom: 20px"
         >添加属性</el-button
@@ -17,6 +18,7 @@
         <el-table-column prop="attrName" label="属性名称" width="150">
         </el-table-column>
         <el-table-column label="属性值列表">
+          <!-- 结构出来一个row，row就是当前行数据 -->
           <template v-slot="{ row }">
             <el-tag
               v-for="attrValue in row.attrValueList"
@@ -50,7 +52,11 @@
           <el-input v-model="attr.attrName"></el-input>
         </el-form-item>
       </el-form>
-      <el-button type="primary" icon="el-icon-plus" style="margin-bottom: 20px"
+      <el-button
+        type="primary"
+        icon="el-icon-plus"
+        style="margin-bottom: 20px"
+        @click="addAttr"
         >添加属性值</el-button
       >
       <el-table
@@ -67,20 +73,50 @@
         >
         </el-table-column>
         <el-table-column prop="attrName" label="属性值名称">
-          <template v-slot="{ row }">
-            <span>{{ row.valueName }}</span>
+          <!-- 结构出row, $index，row就是当前行数据，$index就是当前数据的下标 -->
+          <template v-slot="{ row, $index }">
+            <!--
+              事件修饰符：
+                .native
+                专门给组件绑定事件使用的
+                会给组件中的第一个标签绑定相应的原生DOM事件
+             -->
+            <el-input
+              ref="input"
+              v-if="row.edit"
+              v-model="row.valueName"
+              @blur="enterInput(row, $index)"
+              @keyup.enter.native="enterInput(row, $index)"
+              size="mini"
+            ></el-input>
+            <!-- 直接给对象添加新属性不是响应式数据, 通过this.$set添加的属性才是响应式 -->
+            <span
+              v-else
+              @click="switchInput(row)"
+              style="display: block; width: 100%"
+              >{{ row.valueName }}</span
+            >
           </template>
         </el-table-column>
         <el-table-column label="操作">
-          <el-button
-            type="danger"
-            icon="el-icon-delete"
-            size="mini"
-          ></el-button>
+          <template v-slot="{ row, $index }">
+            <!-- 文档有问题：onConfirm -->
+            <el-popconfirm
+              :title="`确认要删除${row.valueName}吗`"
+              @onConfirm="delAttr($index)"
+            >
+              <el-button
+                type="danger"
+                icon="el-icon-delete"
+                size="mini"
+                slot="reference"
+              ></el-button>
+            </el-popconfirm>
+          </template>
         </el-table-column>
       </el-table>
-      <el-button type="primary">保存</el-button>
-      <el-button>取消</el-button>
+      <el-button type="primary" @click="preAttr">保存</el-button>
+      <el-button @click="isShowAttr = true">取消</el-button>
     </el-card>
   </div>
 </template>
@@ -98,11 +134,14 @@ export default {
         attrValueList: [],
       },
       isShowAttr: true,
+      category: {},
     };
   },
   methods: {
     //请求属性列表数据函数
     async attrList({ category1Id, category2Id, category3Id }) {
+      //把category1Id, category2Id, category3Id存到data的category属性中，将来让preAttr函数使用
+      this.category = { category1Id, category2Id, category3Id };
       //当点击三级分类的时候，要把属性列表数据清空
       this.tableAttrList = [];
       //当点击三级分类的时候，去请求属性列表数据
@@ -115,10 +154,59 @@ export default {
         this.tableAttrList = result.data;
       }
     },
-
+    //点击切换到添加属性页面，并传row
     jumpAttr(row) {
       this.isShowAttr = false;
+      // 为了防止attr变化时直接修改原数据
+      // 深度克隆：防止对象中对象还存在引用关系
       this.attr = JSON.parse(JSON.stringify(row));
+    },
+    //点击的时候把span切换成input输入框，并获取焦点
+    switchInput(row) {
+      //给attrValueList添加一个新属性edit
+      this.$set(row, "edit", true);
+      //获取焦点
+      this.$nextTick(() => {
+        this.$refs.input.focus();
+      });
+    },
+    //当失去焦点或者按下enter键触发
+    enterInput(row, index) {
+      //判断当前文本框内是否有内容，如果没有，找到下标为index的，删除掉
+      if (!row.valueName) {
+        this.attr.attrValueList.splice(index, 1);
+        return;
+      }
+      //当失去焦点或者按下enter键，切换为span
+      row.edit = false;
+    },
+    //点击添加新属性按钮触发
+    addAttr() {
+      //往attrValueList里添加一个新对象（新数据），对象里有属性edit，从而可以显示input输入框
+      this.attr.attrValueList.push({ edit: true });
+      //获取焦点
+      this.$nextTick(() => {
+        this.$refs.input.focus();
+      });
+    },
+    //点击删除按钮的确定时触发
+    delAttr(index) {
+      //找到下标为index的，删除掉
+      this.attr.attrValueList.splice(index, 1);
+    },
+    //当前及保存的时候触发
+    async preAttr() {
+      //发送请求
+      const result = await this.$API.attrs.saveAttrInfo(this.attr);
+      if (result.code === 200) {
+        this.$message.success("更新属性成功");
+        //成功了以后，切换回属性列表页面
+        this.isShowAttr = true;
+        //发送请求，重新更新数据
+        this.attrList(this.category);
+      } else {
+        this.$message.error(result.message);
+      }
     },
   },
   components: {

@@ -52,10 +52,11 @@ export default {
 	},
 
 	//保存商品信息
-	saveAttrInfo() {
+	saveAttrInfo(attrInfo) {
 		return request({
 			method: 'POST',
-			url: `${api_name}/saveAttrInfo`
+			url: `${api_name}/saveAttrInfo`,
+			data: attrInfo
 		});
 	}
 };

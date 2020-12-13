@@ -302,7 +302,14 @@ export default {
           const result = await this.$API.trademark.delPagesList(id);
           if (result.code === 200) {
             this.$message.success("删除成功");
-            this.repeatPagesList(this.page, this.limit); // 请求加载新数据
+            this.repeatPagesList(
+              //当tradeMarkList等于1的时候，说明只剩一条数据，删除后，再请求数据，就显示上一页，否则显示当前页
+              //如果当前是第1页且只剩下1条数据，就请求第1页数据(当前页)
+              this.tradeMarkList.length === 1 && this.page > 1
+                ? this.page - 1
+                : this.page,
+              this.limit
+            ); // 请求加载新数据
           } else {
             this.$message.error("删除失败");
           }
