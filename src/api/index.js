@@ -7,3 +7,4 @@ export { default as clientUser } from './clientUser';
 export { default as order } from './order';
 export { default as trademark } from './porduct/trademark';
 export { default as attrs } from './porduct/attrs';
+export { default as spu } from './porduct/spu';

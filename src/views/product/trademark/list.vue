@@ -352,10 +352,6 @@ export default {
 .trademart-img
   width: 100px
   height: 80px
-.el-pagination
-  text-align: right
->>>.el-pagination__jump
-  margin-right: 320px
 >>>.avatar-uploader .el-upload
   border: 1px dashed #d9d9d9
   border-radius: 6px

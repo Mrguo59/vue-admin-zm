@@ -83,7 +83,7 @@ export default {
         this.$message.success(result.message);
       }
       // 清空父组件的数据
-      this.$emit("switchClear");
+      this.$bus.$emit("switchClear");
     },
     async handleSelectChange2(category2Id) {
       //当点击二级分类的时候，要把三级分类id和数据清空
@@ -98,13 +98,13 @@ export default {
         this.$message.success(result.message);
       }
       // 清空父组件的数据
-      this.$emit("switchClear");
+      this.$bus.$emit("switchClear");
     },
     async handleSelectChange3() {
       //当点击三级分类的时候，要把属性列表数据清空（在list组件）
       const { category1Id, category2Id, category3Id } = this.category;
       //当点击三级分类的时候，去请求属性列表数据（在list组件）
-      this.$emit("attrList", { category1Id, category2Id, category3Id });
+      this.$bus.$emit("attrList", { category1Id, category2Id, category3Id });
     },
   },
   async mounted() {

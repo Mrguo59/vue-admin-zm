@@ -132,7 +132,7 @@
 </template>
 
 <script>
-import Category from "./category";
+import Category from "@/components/Category";
 
 export default {
   name: "AttrList",
@@ -251,6 +251,15 @@ export default {
         this.$message.error(result.message);
       }
     },
+  },
+  mounted() {
+    //让Category组件触发
+    this.$bus.$on("attrList", this.attrList);
+    this.$bus.$on("switchClear", this.switchClear);
+  },
+  beforeDestroy() {
+    this.$bus.$off("attrList", this.attrList);
+    this.$bus.$off("switchClear", this.switchClear);
   },
   components: {
     Category,
