@@ -1,9 +1,18 @@
 <template>
   <div>
     <!-- 当isShowAttr为false的时候，就需要禁用三级分类列表，传给Category组件 -->
-    <Category @attrList="attrList" :disabled="!isShowAttr" />
+    <Category
+      @attrList="attrList"
+      :disabled="!isShowAttr"
+      @switchClear="switchClear"
+    />
     <el-card style="margin-top: 20px" v-show="isShowAttr">
-      <el-button type="primary" icon="el-icon-plus" style="margin-bottom: 20px"
+      <el-button
+        type="primary"
+        icon="el-icon-plus"
+        style="margin-bottom: 20px"
+        :disabled="!category.category3Id"
+        @click="switchAttr"
         >添加属性</el-button
       >
       <el-table :data="tableAttrList" border style="width: 100%">
@@ -40,6 +49,7 @@
               type="danger"
               icon="el-icon-delete"
               size="mini"
+              @click="delAttr(row)"
             ></el-button>
           </template>
         </el-table-column>
@@ -103,7 +113,7 @@
             <!-- 文档有问题：onConfirm -->
             <el-popconfirm
               :title="`确认要删除${row.valueName}吗`"
-              @onConfirm="delAttr($index)"
+              @onConfirm="delAttrVal($index)"
             >
               <el-button
                 type="danger"
@@ -134,7 +144,12 @@ export default {
         attrValueList: [],
       },
       isShowAttr: true,
-      category: {},
+      category: {
+        // 代表三个分类id数据
+        category1Id: "",
+        category2Id: "",
+        category3Id: "",
+      },
     };
   },
   methods: {
@@ -154,6 +169,25 @@ export default {
         this.tableAttrList = result.data;
       }
     },
+    // 显示添加属性列表
+    switchAttr() {
+      this.isShowAttr = false;
+      //切换到添加属性页面，把attr.attrName及attr.attrValueList清空
+      (this.attr.attrName = ""), (this.attr.attrValueList = []);
+    },
+    //删除属性函数
+    delAttr(row) {
+      console.log(row.id);
+      this.$API.attrs.deleteAttr(row.id);
+    },
+    //清除tableAttrList数据及改变添加按钮的状态
+    switchClear() {
+      // 禁用按钮
+      this.category.category3Id = "";
+      // 清空数据
+      this.tableAttrList = [];
+    },
+
     //点击切换到添加属性页面，并传row
     jumpAttr(row) {
       this.isShowAttr = false;
@@ -190,12 +224,21 @@ export default {
       });
     },
     //点击删除按钮的确定时触发
-    delAttr(index) {
+    delAttrVal(index) {
       //找到下标为index的，删除掉
       this.attr.attrValueList.splice(index, 1);
     },
     //当前及保存的时候触发
     async preAttr() {
+      //判断是否有id，如果有，说明是修改，如果没有说明是添加
+      const isAdd = !!this.attr.id;
+      //请求需要的参数
+      const attr = this.attr;
+      //如果没有id，就需要在请求参数里添加categoryId和categoryLevel
+      if (!isAdd) {
+        attr.categoryId = this.category.category3Id;
+        attr.categoryLevel = 3;
+      }
       //发送请求
       const result = await this.$API.attrs.saveAttrInfo(this.attr);
       if (result.code === 200) {

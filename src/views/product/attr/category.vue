@@ -73,22 +73,32 @@ export default {
       this.category.category3Id = "";
       this.category2List = [];
       this.category3List = [];
+
       // console.log(category1Id);
       //当点击一级分类的时候，去请求二级分类数据
       const result = await this.$API.attrs.getCategory2(category1Id);
       if (result.code === 200) {
         this.category2List = result.data;
+      } else {
+        this.$message.success(result.message);
       }
+      // 清空父组件的数据
+      this.$emit("switchClear");
     },
     async handleSelectChange2(category2Id) {
       //当点击二级分类的时候，要把三级分类id和数据清空
       this.category.category3Id = "";
       this.category3List = [];
+
       //当点击二级分类的时候，去请求三级分类数据
       const result = await this.$API.attrs.getCategory3(category2Id);
       if (result.code === 200) {
         this.category3List = result.data;
+      } else {
+        this.$message.success(result.message);
       }
+      // 清空父组件的数据
+      this.$emit("switchClear");
     },
     async handleSelectChange3() {
       //当点击三级分类的时候，要把属性列表数据清空（在list组件）
