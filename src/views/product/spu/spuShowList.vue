@@ -5,6 +5,7 @@
       icon="el-icon-plus"
       style="margin-bottom: 20px"
       :disabled="!category.category3Id"
+      @click="$emit('switchModShow')"
       >添加SPU</el-button
     >
     <el-table :data="spuList" border style="width: 100%" v-loading="loading">
@@ -28,11 +29,17 @@
             @click="$emit('switchModShow', row)"
           ></el-button>
           <el-button type="info" icon="el-icon-info" size="mini"></el-button>
-          <el-button
-            type="danger"
-            icon="el-icon-delete"
-            size="mini"
-          ></el-button>
+          <el-popconfirm
+            :title="`确认要删除${row.spuName}吗`"
+            @onConfirm="delSpu(row)"
+          >
+            <el-button
+              type="danger"
+              icon="el-icon-delete"
+              size="mini"
+              slot="reference"
+            ></el-button>
+          </el-popconfirm>
         </template>
       </el-table-column>
     </el-table>
@@ -67,6 +74,16 @@ export default {
     };
   },
   methods: {
+    //删除SPU
+    async delSpu(row) {
+      const result = await this.$API.spu.deleteSpu(row.id);
+      if (result.code === 200) {
+        this.$message.success("删除SPU成功");
+        this.repeatPagesList(this.page, this.limit);
+      } else {
+        this.$message.error(result.message);
+      }
+    },
     // 获取SPU分页列表
     async repeatPagesList(page, limit) {
       this.loading = true;
