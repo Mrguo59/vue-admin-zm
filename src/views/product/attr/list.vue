@@ -45,12 +45,17 @@
               @click="jumpAttr(row)"
             ></el-button>
 
-            <el-button
-              type="danger"
-              icon="el-icon-delete"
-              size="mini"
-              @click="delAttr(row)"
-            ></el-button>
+            <el-popconfirm
+              :title="`确认要删除${row.attrName}吗`"
+              @onConfirm="delAttr(row)"
+            >
+              <el-button
+                type="danger"
+                icon="el-icon-delete"
+                size="mini"
+                slot="reference"
+              ></el-button>
+            </el-popconfirm>
           </template>
         </el-table-column>
       </el-table>
@@ -176,9 +181,15 @@ export default {
       (this.attr.attrName = ""), (this.attr.attrValueList = []);
     },
     //删除属性函数
-    delAttr(row) {
+    async delAttr(row) {
       console.log(row.id);
-      this.$API.attrs.deleteAttr(row.id);
+      const result = await this.$API.attrs.deleteAttr(row.id);
+      if (result.code) {
+        this.$message.success("删除属性成功");
+        this.attrList(this.category);
+      } else {
+        this.$message.error(result.message);
+      }
     },
     //清除tableAttrList数据及改变添加按钮的状态
     switchClear() {

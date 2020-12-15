@@ -25,7 +25,7 @@
             type="primary"
             icon="el-icon-edit"
             size="mini"
-            @click="$emit('switchModSpu', row)"
+            @click="$emit('switchModShow', row)"
           ></el-button>
           <el-button type="info" icon="el-icon-info" size="mini"></el-button>
           <el-button
