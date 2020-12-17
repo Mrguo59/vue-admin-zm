@@ -182,9 +182,9 @@ export default {
         //find适用于数组中是引用类型
         // 找到了返回{}  没有找到返回undefined,对象转换为布尔值就是true，undefined为false
         //如果SpuSaleAttrList中存在BaseAttrList里的属性，就需要过滤掉，找到了说明存在，因为要过滤掉，所以要取反
-        return !this.SpuSaleAttrList.find((sale) => {
-          return sale.baseSaleAttrId === base.id;
-        });
+        return !this.SpuSaleAttrList.find(
+          (sale) => sale.baseSaleAttrId === base.id
+        );
       });
     },
   },
@@ -275,10 +275,18 @@ export default {
             spuSaleAttrList: this.SpuSaleAttrList,
           };
           // console.log(spu);
+
+          let result;
           // 发送请求
-          const result = await this.$API.spu.updateSpuInfo(spu);
+          //判断是修改还是添加
+          if (this.spu.id) {
+            result = await this.$API.spu.updateSpuInfo(spu);
+          } else {
+            result = await this.$API.spu.saveSpuInfo(spu);
+          }
+
           if (result.code === 200) {
-            this.$message.success("更新数据成功");
+            this.$message.success(`${this.spu.id ? "修改" : "添加"}数据成功`);
             // 切换回SpushowList组件
             this.$emit("switchModUpdate", this.spu.category3Id);
           } else {
@@ -423,9 +431,13 @@ export default {
   },
   mounted() {
     this.getTrademarkList();
-    this.getSpuImageList();
     this.getBaseSaleAttrList();
-    this.getSpuSaleAttrList();
+    // 判断是添加还是修改
+    // 如果是修改就会有id，添加没有id
+    if (this.spu.id) {
+      this.getSpuImageList();
+      this.getSpuSaleAttrList();
+    }
   },
 };
 </script>

@@ -1,11 +1,12 @@
 <template>
   <el-card style="margin-top: 20px">
+    <!-- 触发switchModShow事件，传category3Id，spuUpdateList组件需要发请求的时候使用 -->
     <el-button
       type="primary"
       icon="el-icon-plus"
       style="margin-bottom: 20px"
       :disabled="!category.category3Id"
-      @click="$emit('switchModShow')"
+      @click="$emit('switchModShow', { category3Id: category.category3Id })"
       >添加SPU</el-button
     >
     <el-table :data="spuList" border style="width: 100%" v-loading="loading">
@@ -21,7 +22,12 @@
       <el-table-column prop="description" label="SPU描述"> </el-table-column>
       <el-table-column label="操作">
         <template v-slot="{ row }">
-          <el-button type="primary" icon="el-icon-plus" size="mini"></el-button>
+          <el-button
+            type="primary"
+            icon="el-icon-plus"
+            size="mini"
+            @click="$emit('switchModSku', { ...row, ...category })"
+          ></el-button>
           <el-button
             type="primary"
             icon="el-icon-edit"
