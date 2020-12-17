@@ -124,9 +124,7 @@
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="preAttr('form')">保存</el-button>
-        <el-button @click="$emit('switchModUpdate', spu.category3Id)"
-          >取消</el-button
-        >
+        <el-button @click="$emit('switchModUpdate')">取消</el-button>
       </el-form-item>
     </el-form>
     <el-dialog :visible.sync="visible">
@@ -136,6 +134,8 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
+
 export default {
   name: "SpuUpdateList",
   props: {
@@ -161,6 +161,9 @@ export default {
     };
   },
   computed: {
+    ...mapState({
+      category: (state) => state.category.category,
+    }),
     //处理上传图片的函数,格式化图片数据
     spuImageListType() {
       return this.spuImageList.map((img) => {
@@ -271,6 +274,7 @@ export default {
           // 收集数据
           const spu = {
             ...this.spu,
+            category3Id: this.category.category3Id,
             spuImageList: this.spuImageList,
             spuSaleAttrList: this.SpuSaleAttrList,
           };
@@ -288,7 +292,7 @@ export default {
           if (result.code === 200) {
             this.$message.success(`${this.spu.id ? "修改" : "添加"}数据成功`);
             // 切换回SpushowList组件
-            this.$emit("switchModUpdate", this.spu.category3Id);
+            this.$emit("switchModUpdate");
           } else {
             this.$message.error(result.message);
           }

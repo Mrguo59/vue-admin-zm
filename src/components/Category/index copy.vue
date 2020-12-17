@@ -51,8 +51,6 @@
 </template>
 
 <script>
-import { mapState, mapActions, mapMutations } from "vuex";
-
 export default {
   name: "Category",
   props: ["disabled"],
@@ -63,51 +61,59 @@ export default {
         category2Id: "",
         category3Id: "",
       },
-      // category1List: [],
-      // category2List: [],
-      // category3List: [],
+      category1List: [],
+      category2List: [],
+      category3List: [],
     };
   },
-  computed: {
-    ...mapState({
-      category1List: (state) => state.category.category1List,
-      category2List: (state) => state.category.category2List,
-      category3List: (state) => state.category.category3List,
-    }),
-  },
   methods: {
-    ...mapActions([
-      "category/getCategory1List",
-      "category/getCategory2List",
-      "category/getCategory3List",
-    ]),
-    ...mapMutations(["category/SET_CATEGORY3_ID"]),
-
     async handleSelectChange1(category1Id) {
       //当点击一级分类的时候，要把二级，三级分类id和数据清空
       this.category.category2Id = "";
       this.category.category3Id = "";
+      this.category2List = [];
+      this.category3List = [];
 
-      this["category/getCategory2List"](category1Id);
-
-      // // 清空父组件的数据
-      // this.$bus.$emit("switchClear");
+      // console.log(category1Id);
+      //当点击一级分类的时候，去请求二级分类数据
+      const result = await this.$API.attrs.getCategory2(category1Id);
+      if (result.code === 200) {
+        this.category2List = result.data;
+      } else {
+        this.$message.success(result.message);
+      }
+      // 清空父组件的数据
+      this.$bus.$emit("switchClear");
     },
     async handleSelectChange2(category2Id) {
       //当点击二级分类的时候，要把三级分类id和数据清空
       this.category.category3Id = "";
+      this.category3List = [];
 
-      this["category/getCategory3List"](category2Id);
-
-      // // 清空父组件的数据
-      // this.$bus.$emit("switchClear");
+      //当点击二级分类的时候，去请求三级分类数据
+      const result = await this.$API.attrs.getCategory3(category2Id);
+      if (result.code === 200) {
+        this.category3List = result.data;
+      } else {
+        this.$message.success(result.message);
+      }
+      // 清空父组件的数据
+      this.$bus.$emit("switchClear");
     },
-    async handleSelectChange3(category3Id) {
-      this["category/SET_CATEGORY3_ID"](category3Id);
+    async handleSelectChange3() {
+      //当点击三级分类的时候，要把属性列表数据清空（在list组件）
+      const { category1Id, category2Id, category3Id } = this.category;
+      //当点击三级分类的时候，去请求属性列表数据（在list组件）
+      this.$bus.$emit("attrList", { category1Id, category2Id, category3Id });
     },
   },
   async mounted() {
-    this["category/getCategory1List"]();
+    //一上来获取一级分类列表数据
+    const result = await this.$API.attrs.getCategory1();
+    // console.log(result);
+    if (result.code === 200) {
+      this.category1List = result.data;
+    }
   },
 };
 </script>

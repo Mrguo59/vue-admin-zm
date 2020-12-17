@@ -98,6 +98,8 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
+
 export default {
   name: "SkuList",
   props: {
@@ -115,6 +117,11 @@ export default {
       tableAttrList: [], // 平台属性数据
       rules: {}, // 表单验证规则
     };
+  },
+  computed: {
+    ...mapState({
+      category: (state) => state.category.category,
+    }),
   },
   methods: {
     handleSelectionChange(val) {
@@ -152,11 +159,7 @@ export default {
       //当点击三级分类的时候，要把属性列表数据清空
       // this.tableAttrList = [];
       //当点击三级分类的时候，去请求属性列表数据
-      const result = await this.$API.attrs.attrInfoList({
-        category1Id: this.spu.category1Id,
-        category2Id: this.spu.category2Id,
-        category3Id: this.spu.category3Id,
-      });
+      const result = await this.$API.attrs.attrInfoList(this.category);
       if (result.code === 200) {
         this.tableAttrList = result.data;
       }

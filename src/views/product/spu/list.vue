@@ -60,10 +60,10 @@ export default {
     switchModUpdate(category3Id) {
       //控制SpuShowList组件和SpuUpdateList组件显示隐藏的变量
       this.isShowSpu = true;
-      // 等SpuShowList组件加载完成，在触发事件
-      this.$nextTick(() => {
-        this.$bus.$emit("attrList", { category3Id });
-      });
+      // // 等SpuShowList组件加载完成，在触发事件
+      // this.$nextTick(() => {
+      //   this.$bus.$emit("attrList", { category3Id });
+      // });
     },
   },
   components: {

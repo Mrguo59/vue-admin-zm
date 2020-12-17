@@ -138,6 +138,7 @@
 
 <script>
 import Category from "@/components/Category";
+import { mapState } from "vuex";
 
 export default {
   name: "AttrList",
@@ -149,27 +150,38 @@ export default {
         attrValueList: [],
       },
       isShowAttr: true,
-      category: {
-        // 代表三个分类id数据
-        category1Id: "",
-        category2Id: "",
-        category3Id: "",
-      },
+      // category: {
+      //   // 代表三个分类id数据
+      //   category1Id: "",
+      //   category2Id: "",
+      //   category3Id: "",
+      // },
     };
+  },
+  computed: {
+    ...mapState({
+      category: (state) => state.category.category,
+    }),
+  },
+  watch: {
+    "category.category3Id"(category3Id) {
+      if (!category3Id) return;
+      this.attrList();
+    },
+    "category.category1Id"() {
+      this.switchClear();
+    },
+    "category.category2Id"() {
+      this.switchClear();
+    },
   },
   methods: {
     //请求属性列表数据函数
-    async attrList({ category1Id, category2Id, category3Id }) {
-      //把category1Id, category2Id, category3Id存到data的category属性中，将来让preAttr函数使用
-      this.category = { category1Id, category2Id, category3Id };
+    async attrList() {
       //当点击三级分类的时候，要把属性列表数据清空
       this.tableAttrList = [];
       //当点击三级分类的时候，去请求属性列表数据
-      const result = await this.$API.attrs.attrInfoList({
-        category1Id,
-        category2Id,
-        category3Id,
-      });
+      const result = await this.$API.attrs.attrInfoList(this.category);
       if (result.code === 200) {
         this.tableAttrList = result.data;
       }
@@ -182,11 +194,11 @@ export default {
     },
     //删除属性函数
     async delAttr(row) {
-      console.log(row.id);
+      // console.log(row.id);
       const result = await this.$API.attrs.deleteAttr(row.id);
       if (result.code) {
         this.$message.success("删除属性成功");
-        this.attrList(this.category);
+        this.attrList();
       } else {
         this.$message.error(result.message);
       }
@@ -251,26 +263,26 @@ export default {
         attr.categoryLevel = 3;
       }
       //发送请求
-      const result = await this.$API.attrs.saveAttrInfo(this.attr);
+      const result = await this.$API.attrs.saveAttrInfo(attr);
       if (result.code === 200) {
         this.$message.success("更新属性成功");
         //成功了以后，切换回属性列表页面
         this.isShowAttr = true;
         //发送请求，重新更新数据
-        this.attrList(this.category);
+        this.attrList();
       } else {
         this.$message.error(result.message);
       }
     },
   },
   mounted() {
-    //让Category组件触发
-    this.$bus.$on("attrList", this.attrList);
-    this.$bus.$on("switchClear", this.switchClear);
+    // //让Category组件触发
+    // this.$bus.$on("attrList", this.attrList);
+    // this.$bus.$on("switchClear", this.switchClear);
   },
   beforeDestroy() {
-    this.$bus.$off("attrList", this.attrList);
-    this.$bus.$off("switchClear", this.switchClear);
+    // this.$bus.$off("attrList", this.attrList);
+    // this.$bus.$off("switchClear", this.switchClear);
   },
   components: {
     Category,
