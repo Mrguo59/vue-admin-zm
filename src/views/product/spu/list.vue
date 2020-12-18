@@ -38,11 +38,11 @@ export default {
     };
   },
   methods: {
-    switchModSpu(category3Id) {
+    switchModSpu() {
       this.isShowSku = false;
-      this.$nextTick(() => {
-        this.$bus.$emit("attrList", { category3Id });
-      });
+      // this.$nextTick(() => {
+      //   this.$bus.$emit("attrList", { category3Id });
+      // });
     },
 
     switchModSku(skuItem) {
@@ -65,6 +65,10 @@ export default {
       //   this.$bus.$emit("attrList", { category3Id });
       // });
     },
+  },
+  //组件卸载之前清除掉vuex的数据
+  beforeDestroy() {
+    this.$store.commit("category/RESET_CATEGORY_ID");
   },
   components: {
     Category,

@@ -73,6 +73,7 @@ export default {
       category1List: (state) => state.category.category1List,
       category2List: (state) => state.category.category2List,
       category3List: (state) => state.category.category3List,
+      Newcategory: (state) => state.category.category,
     }),
   },
   methods: {
@@ -108,6 +109,7 @@ export default {
   },
   async mounted() {
     this["category/getCategory1List"]();
+    this.category = this.Newcategory;
   },
 };
 </script>

@@ -280,9 +280,11 @@ export default {
     // this.$bus.$on("attrList", this.attrList);
     // this.$bus.$on("switchClear", this.switchClear);
   },
+  //组件卸载之前清除掉vuex的数据
   beforeDestroy() {
     // this.$bus.$off("attrList", this.attrList);
     // this.$bus.$off("switchClear", this.switchClear);
+    this.$store.commit("category/RESET_CATEGORY_ID");
   },
   components: {
     Category,

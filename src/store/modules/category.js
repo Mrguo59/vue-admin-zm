@@ -83,6 +83,15 @@ export default {
 		},
 		SET_CATEGORY3_ID(state, category3Id) {
 			state.category.category3Id = category3Id;
+		},
+		//组件卸载之前清除掉vuex的数据
+		RESET_CATEGORY_ID(state) {
+			state.category.category1Id = '';
+			state.category.category2Id = '';
+			state.category.category3Id = '';
+			state.category1List = [];
+			state.category2List = [];
+			state.category3List = [];
 		}
 	}
 };
