@@ -15,8 +15,10 @@
         v-if="isShowSpu"
         @switchModShow="switchModShow"
         @switchModSku="switchModSku"
+        @switchModSee="switchModSee"
       />
       <SpuUpdateList v-else :row="row" @switchModUpdate="switchModUpdate" />
+      <SkuSeeList />
     </div>
   </div>
 </template>
@@ -26,6 +28,7 @@ import Category from "@/components/Category";
 import SpuShowList from "./spuShowList";
 import SpuUpdateList from "./spuUpdateList";
 import SkuList from "./skuList";
+import SkuSeeList from "./skuSeeList";
 
 export default {
   name: "SpuList",
@@ -38,6 +41,12 @@ export default {
     };
   },
   methods: {
+    switchModSee(SeeItem) {
+      this.$nextTick(() => {
+        this.$bus.$emit("ejectSku", SeeItem);
+      });
+    },
+
     switchModSpu() {
       this.isShowSku = false;
       // this.$nextTick(() => {
@@ -75,6 +84,7 @@ export default {
     SpuShowList,
     SpuUpdateList,
     SkuList,
+    SkuSeeList,
   },
 };
 </script>
